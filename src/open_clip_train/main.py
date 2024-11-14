@@ -36,6 +36,7 @@ from open_clip_train.params import parse_args
 from open_clip_train.scheduler import cosine_lr, const_lr, const_lr_cooldown
 from open_clip_train.train import train_one_epoch, evaluate
 from open_clip_train.file_utils import pt_load, check_exists, start_sync_process, remote_sync
+from open_clip.tokenizer import DEFAULT_CONTEXT_LENGTH
 
 
 LATEST_CHECKPOINT_NAME = "epoch_latest.pt"
@@ -229,6 +230,7 @@ def main(args):
         force_quick_gelu=args.force_quick_gelu,
         force_custom_text=args.force_custom_text,
         force_patch_dropout=args.force_patch_dropout,
+        force_text_dropout=args.force_text_dropout,
         force_image_size=args.force_image_size,
         image_mean=args.image_mean,
         image_std=args.image_std,
@@ -353,7 +355,8 @@ def main(args):
             logging.info(f"=> loaded checkpoint '{args.resume}' (epoch {start_epoch})")
 
     # initialize datasets
-    tokenizer = get_tokenizer(args.model)
+    logging.info(f"Context_length is set to {DEFAULT_CONTEXT_LENGTH * (1 - args.force_text_dropout)}")
+    tokenizer = get_tokenizer(args.model, context_length=int(DEFAULT_CONTEXT_LENGTH * (1 - args.force_text_dropout)), reduction_mask=args.reduction_mask, mask_probability_file=args.mask_probability_file)
     data = get_data(
         args,
         (preprocess_train, preprocess_val),
@@ -366,6 +369,8 @@ def main(args):
     scheduler = None
     if 'train' in data and optimizer is not None:
         total_steps = (data["train"].dataloader.num_batches // args.accum_freq) * args.epochs
+        if args.lr_warmup_epochs != 0.0:
+            args.warmup = int(total_steps * (args.lr_warmup_epochs / args.epochs))
         if args.lr_scheduler == "cosine":
             scheduler = cosine_lr(optimizer, args.lr, args.warmup, total_steps)
         elif args.lr_scheduler == "const":

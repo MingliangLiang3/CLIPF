@@ -186,6 +186,7 @@ def create_model(
         force_quick_gelu: bool = False,
         force_custom_text: bool = False,
         force_patch_dropout: Optional[float] = None,
+        force_text_dropout: Optional[float] = None,
         force_image_size: Optional[Union[int, Tuple[int, int]]] = None,
         force_preprocess_cfg: Optional[Dict[str, Any]] = None,
         pretrained_image: bool = False,
@@ -240,6 +241,10 @@ def create_model(
         if force_image_size is not None:
             # override model config's image size
             model_cfg["vision_cfg"]["image_size"] = force_image_size
+        
+        if force_text_dropout is not None:
+            # override the default text dropout value
+            model_cfg["text_cfg"]["text_dropout"] = force_text_dropout
 
         is_timm_model = 'timm_model_name' in model_cfg.get('vision_cfg', {})
         if pretrained_image:
@@ -381,6 +386,7 @@ def create_model_and_transforms(
         force_quick_gelu: bool = False,
         force_custom_text: bool = False,
         force_patch_dropout: Optional[float] = None,
+        force_text_dropout: Optional[float] = None,
         force_image_size: Optional[Union[int, Tuple[int, int]]] = None,
         image_mean: Optional[Tuple[float, ...]] = None,
         image_std: Optional[Tuple[float, ...]] = None,
@@ -405,6 +411,7 @@ def create_model_and_transforms(
         force_quick_gelu=force_quick_gelu,
         force_custom_text=force_custom_text,
         force_patch_dropout=force_patch_dropout,
+        force_text_dropout=force_text_dropout,
         force_image_size=force_image_size,
         force_preprocess_cfg=force_preprocess_cfg,
         pretrained_image=pretrained_image,

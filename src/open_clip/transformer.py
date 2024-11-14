@@ -678,6 +678,7 @@ class TextTransformer(nn.Module):
             mlp_ratio: float = 4.0,
             ls_init_value: float = None,
             output_dim: int = 512,
+            text_dropout: float = 0.,
             embed_cls: bool = False,
             no_causal_mask: bool = False,
             pad_id: int = 0,
@@ -690,7 +691,7 @@ class TextTransformer(nn.Module):
         super().__init__()
         assert pool_type in ('first', 'last', 'argmax', 'none')
         self.output_tokens = output_tokens
-        self.num_pos = self.context_length = context_length
+        self.num_pos = self.context_length = int(context_length * (1 - text_dropout))
         self.vocab_size = vocab_size
         self.width = width
         self.output_dim = output_dim

@@ -20,7 +20,7 @@ import torch
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 _nltk_init = False
 
-DEFAULT_CONTEXT_LENGTH = 77  # default context length for OpenAI CLIP
+DEFAULT_CONTEXT_LENGTH = 32  # default context length for OpenAI CLIP
 
 
 @lru_cache()
@@ -137,7 +137,8 @@ class SimpleTokenizer(object):
             additional_special_tokens: Optional[List[str]] = None,
             context_length: Optional[int] = DEFAULT_CONTEXT_LENGTH,
             clean: str = 'lower',
-            reduction_mask: str = ''
+            reduction_mask: str = '',
+            mask_probability_file: str = ''
     ):
         self.byte_encoder = bytes_to_unicode()
         self.byte_decoder = {v: k for k, v in self.byte_encoder.items()}
@@ -167,6 +168,9 @@ class SimpleTokenizer(object):
         self.eot_token_id = self.all_special_ids[1]
         self.context_length = context_length
         self.clean_fn = get_clean_fn(clean)
+        if mask_probability_file:
+            with open(mask_probability_file, 'r') as f:
+                self.mask_probability = eval(f.read())
         self.reduction_fn = get_reduction_mask_fn(reduction_mask) if reduction_mask else None
 
     def bpe(self, token):
@@ -217,6 +221,14 @@ class SimpleTokenizer(object):
             token = ''.join(self.byte_encoder[b] for b in token.encode('utf-8'))
             bpe_tokens.extend(self.encoder[bpe_token] for bpe_token in self.bpe(token).split(' '))
         return bpe_tokens
+    
+    def encode_text(self, text):
+        text_tokens = []
+        text = whitespace_clean(basic_clean(text)).lower()
+        for token in re.findall(self.pat, text):
+            token = ''.join(self.byte_encoder[b] for b in token.encode('utf-8'))
+            text_tokens.append(token)
+        return text_tokens
 
     def decode(self, tokens):
         text = ''.join([self.decoder[token] for token in tokens])
@@ -244,6 +256,15 @@ class SimpleTokenizer(object):
         assert context_length, 'Please set a valid context length'
 
         if self.reduction_fn is not None:
+            if self.reduction_fn == frequency_mask_tokenize:
+                return self.reduction_fn(
+                    texts,
+                    context_length=context_length,
+                    sot_token_id=self.sot_token_id,
+                    eot_token_id=self.eot_token_id,
+                    encode_fn=self.encode,
+                    mask_probability=self.mask_probability,
+                )
             # use reduction strategy for tokenize if set, otherwise default to truncation below
             return self.reduction_fn(
                 texts,
@@ -387,9 +408,57 @@ def syntax_mask_tokenize(
     return result
 
 
+
+def frequency_mask_tokenize(        
+    texts: Union[str, List[str]],
+    context_length: int,
+    sot_token_id: int,
+    eot_token_id: int,
+    encode_fn: Callable,
+    mask_probability: dict,
+) -> torch.LongTensor:
+    """ Returns the tokenized representation of given input string(s).
+    Apply frequency masking before tokenize.
+    """
+    words_list, words_freq_list = [], []
+    for text in texts:
+        words = _tokenizer.encode_text(text)
+        words_freq_list.append([mask_probability.get(str(word), 1.0) for word in words]) # drop the word frequency lower than 5
+        words_list.append(words)
+    result = torch.zeros(len(words_list), context_length, dtype=torch.long)
+
+    for i, words in enumerate(words_list):
+        tokens = encode_fn(' '.join(words))
+        tokens = torch.tensor(tokens)
+        num_tokens = len(tokens)
+        if num_tokens > context_length - 2:  # 2 for sot and eot token
+            num_keep = context_length - 2
+
+            num_keep = min(num_keep, len(words))
+            
+            rand = torch.rand(len(words))
+            rand = rand - torch.tensor(words_freq_list[i])
+            indices = rand.topk(num_keep).indices
+
+            # sorted indices
+            indices = indices.sort().values
+            words = [words[i] for i in indices]
+
+            num_tokens = num_keep
+            tokens = encode_fn(' '.join(words))
+            tokens = torch.tensor(tokens)
+            tokens = tokens[:num_tokens]
+
+        result[i, 0] = sot_token_id
+        result[i, 1:num_tokens + 1] = tokens
+        result[i, num_tokens + 1] = eot_token_id
+
+    return result
+
+
 def get_reduction_mask_fn(type: str):
     """ Choose strategy for dropping (masking) tokens to achieve target context length"""
-    assert type in ('simple', 'random', 'shuffle', 'syntax')
+    assert type in ('simple', 'random', 'shuffle', 'syntax', 'frequency')
     if type == 'simple':
         return simple_mask_tokenize  # randomly select block [start:end]
     elif type == 'random':
@@ -398,6 +467,8 @@ def get_reduction_mask_fn(type: str):
         return partial(random_mask_tokenize, shuffle=True)  # randomly drop tokens (shuffle order)
     elif type == 'syntax':
         return syntax_mask_tokenize  # randomly drop prioritized by syntax
+    elif type == 'frequency':
+        return frequency_mask_tokenize
 
 
 class HFTokenizer:

@@ -158,6 +158,9 @@ def parse_args(args):
         help="LR scheduler. One of: 'cosine', 'const' (constant), 'const-cooldown' (constant w/ cooldown). Default: cosine",
     )
     parser.add_argument(
+        "--lr-warmup-epochs", type=float, default=0.0, help="Number of epoch to warmup for."
+    )
+    parser.add_argument(
         "--lr-cooldown-end", type=float, default=0.0,
         help="End learning rate for cooldown schedule. Default: 0"
     )
@@ -278,6 +281,24 @@ def parse_args(args):
         default=None,
         type=float,
         help="Override the patch dropout during training, for fine tuning with no dropout near the end as in the paper",
+    )
+    parser.add_argument(
+        "--force-text-dropout",
+        default=0.0,
+        type=float,
+        help="Override the text dropout during training, for fine tuning with no dropout near the end as in the paper",
+    )
+    parser.add_argument(
+        "--reduction-mask",
+        default='None',
+        type=str,
+        help="Override the patch dropout during training, for fine tuning with no dropout near the end as in the paper",
+    )
+    parser.add_argument(
+        "--mask-probability-file",
+        default='None',
+        type=str,
+        help="The word frequency file to use for masking tokens in the text input.",
     )
     parser.add_argument(
         "--force-custom-text",

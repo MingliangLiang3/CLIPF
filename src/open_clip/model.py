@@ -56,7 +56,8 @@ class CLIPVisionCfg:
 
 @dataclass
 class CLIPTextCfg:
-    context_length: int = 77
+    context_length: int = 32
+    text_dropout: float = 0.  # what fraction of patches to dropout during training (0 would mean disabled and no patches dropped) - 0.5 to 0.75 recommended in the paper for optimal results
     vocab_size: int = 49408
     hf_tokenizer_name: Optional[str] = None
     tokenizer_kwargs: Optional[dict] = None
@@ -205,6 +206,7 @@ def _build_text_tower(
             mlp_ratio=text_cfg.mlp_ratio,
             ls_init_value=text_cfg.ls_init_value,
             output_dim=embed_dim,
+            text_dropout=text_cfg.text_dropout,
             embed_cls=text_cfg.embed_cls,
             no_causal_mask=text_cfg.no_causal_mask,
             pad_id=text_cfg.pad_id,
