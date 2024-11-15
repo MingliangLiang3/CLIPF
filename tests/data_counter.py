@@ -1,4 +1,3 @@
-import random
 import pandas as pd
 from open_clip.tokenizer import SimpleTokenizer
 import collections
