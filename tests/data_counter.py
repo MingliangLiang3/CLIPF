@@ -7,7 +7,7 @@ import json
 from tqdm import tqdm
 from multiprocessing import Pool
 
-reader = pd.read_csv('../data/cc12m/cc12m_train_fs_normal.csv', sep='\t', chunksize=10000)
+reader = pd.read_csv('../data/cc12m/cc12m_train.csv', sep='\t', chunksize=10000)
 tokenizer = SimpleTokenizer()
 
 def process_by_chunk(row):
@@ -26,12 +26,13 @@ counter = dict(filter(lambda x: x[1] >= 5, counter.items()))
 counter = dict(counter.items())
 total_count = sum(counter.values())
 counter = dict(sorted(counter.items(), key=lambda x: x[1], reverse=True))
-print("Total words:", total_count) 5
-save the counter to a json file
-with open('../data/cc12m/cc12m_train_fs_normal_counter_words.json', 'w', encoding='utf-8') as f:
+print("Total words:", total_count) 
+# save the counter to a json file
+with open('../data/cc12m/cc12m_train_counter.json', 'w', encoding='utf-8') as f:
     json.dump(counter, f)
 
 threshold = 1e-6
+freqs = {word: count / total_count for word, count in counter.items()} 
 word_frequency = {word: 1 - round(np.sqrt(threshold / freqs[word]), 6) for word in counter}
 # Save the word_frequency to a json file
 with open('../data/cc12m/cc12m_fq_1e6_words.json', 'w', encoding='utf-8') as f:
