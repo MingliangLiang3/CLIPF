@@ -35,7 +35,6 @@ We will pre-train the models based on the following code and settings [Open_clip
 | CLIPA  | syntax     | 49           | 4           | 8.9            | 13.0           | 14.2            | 24.6            |
 | CLIPF  | frequency  | 49           | 4           | **10.9**       | **16.0**       | 17.0            | **30.9**        |
 
-
 **Comparison of CLIPF, CLIP, and CLIPA for zero-shot classification on ImageNet-1K.**
 CLIP is the baseline model without image and text masking during pre-training. 
 The main difference between CLIP and FLIP/CLIPA/CLIPF is whether or not image and text masking is applied during pre-training.
