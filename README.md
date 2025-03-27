@@ -6,7 +6,7 @@ Vision Language Models (VLMs) can be trained more efficiently if training sets c
 
 # Results and Pre-trained Models
 
-We will pre-train the models based on the following code and settings [Open_clip](https://github.com/mlfoundations/open_clip)
+We will pre-train the models based on the following code and settings [open_clip](https://github.com/mlfoundations/open_clip)
 
 **Zero-shot classification accuracy on ImageNet-1K.**
 
