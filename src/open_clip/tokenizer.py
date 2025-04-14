@@ -168,7 +168,7 @@ class SimpleTokenizer(object):
         self.eot_token_id = self.all_special_ids[1]
         self.context_length = context_length
         self.clean_fn = get_clean_fn(clean)
-        if mask_probability_file:
+        if mask_probability_file is not None:
             with open(mask_probability_file, 'r') as f:
                 self.mask_probability = eval(f.read())
         self.reduction_fn = get_reduction_mask_fn(reduction_mask) if reduction_mask else None
