@@ -44,7 +44,7 @@ Columns represent models, text masking methods, the number of image and text tok
 
 # Scaling to the larger Dataset.
 
-We pre-trained the model for 6 epochs on the LAION400M dataset with a small image size (115) and 50% image masking ratios with ViT-B/16 as the image encoder. Then we fine-tuned the model on a normal image size of 224x224 without image and text masking for 0.4 epoch. For the LAION400M dataset, we successfully downloaded 297 million. We pre-trained and fine-tuned the models on 4 H100 GPUs with amp_bf16 precision. 
+We pre-trained the model for 6 epochs on the LAION400M dataset with a small image size (112x112) and 50% image masking ratios with ViT-B/16 as the image encoder. Then we fine-tuned the model on a normal image size of 224x224 without image and text masking for 0.4 epoch. For the LAION400M dataset, we successfully downloaded 297 million. We pre-trained and fine-tuned the models on 4 H100 GPUs with amp_bf16 precision. 
 
 | Method | GPU Hours | Sample Seen | Image Size | Masking Ratio | Image Token | Text Token | Before Tuning | After Tuning |
 |--------|-----------|-------------|------------|---------------|-------------|-----------|---------------|--------------|
