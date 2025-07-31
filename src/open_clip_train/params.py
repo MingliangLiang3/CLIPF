@@ -296,7 +296,7 @@ def parse_args(args):
     )
     parser.add_argument(
         "--mask-probability-file",
-        default='None',
+        default=None,
         type=str,
         help="The word frequency file to use for masking tokens in the text input.",
     )
