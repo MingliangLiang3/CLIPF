@@ -138,7 +138,7 @@ class SimpleTokenizer(object):
             context_length: Optional[int] = DEFAULT_CONTEXT_LENGTH,
             clean: str = 'lower',
             reduction_mask: str = '',
-            mask_probability_file: str = ''
+            mask_probability_file: str = None,
     ):
         self.byte_encoder = bytes_to_unicode()
         self.byte_decoder = {v: k for k, v in self.byte_encoder.items()}
