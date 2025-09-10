@@ -461,7 +461,7 @@ def get_reduction_mask_fn(type: str):
     assert type in ('None', 'simple', 'random', 'shuffle', 'syntax', 'frequency')
     if type == 'None':
         return None
-    if type == 'simple':
+    elif type == 'simple':
         return simple_mask_tokenize  # randomly select block [start:end]
     elif type == 'random':
         return random_mask_tokenize  # randomly drop tokens (keep order)
