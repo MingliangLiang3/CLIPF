@@ -458,7 +458,9 @@ def frequency_mask_tokenize(
 
 def get_reduction_mask_fn(type: str):
     """ Choose strategy for dropping (masking) tokens to achieve target context length"""
-    assert type in ('simple', 'random', 'shuffle', 'syntax', 'frequency')
+    assert type in ('None', 'simple', 'random', 'shuffle', 'syntax', 'frequency')
+    if type == 'None':
+        return None
     if type == 'simple':
         return simple_mask_tokenize  # randomly select block [start:end]
     elif type == 'random':
