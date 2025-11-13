@@ -1,5 +1,7 @@
 # Frequency is what you need: Word-frequency Masking benefits Vision-Language Model Pre-training
 
+Our paper is accepted by WACV 2026!
+
 # Abstract
 Vision Language Models (VLMs) can be trained more efficiently if training sets can be reduced in size. Recent work has shown the benefits of masking text during VLM training using a variety of approaches: truncation, random masking, block masking and syntax masking. In this paper, we show that the best masking strategy changes over training epochs and that, given sufficient training epochs. We analyze existing text masking approaches including syntax masking, which is currently the state of the art, and identify the word frequency distribution as important in determining their success. Experiments on a large range of data sets demonstrate that syntax masking is outperformed by other approaches, given sufficient epochs, and that our proposed frequency-based approach, called Contrastive Language-Image Pre-training with Word Frequency Masking (CLIPF) has numerous advantages. The benefits are particularly evident as the number of input tokens decreases.
 # Results and Pre-trained Models
