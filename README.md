@@ -1,4 +1,4 @@
-## Frequency is what you need: Word-frequency Masking benefits Vision-Language Model Pre-training (WACV 2026)
+## Frequency Is What You Need: Considering Word Frequency When Text Masking Benefits Vision-Language Model Pre-training (WACV 2026)
 
 This repository provides code/configs for **CLIPF**: *Contrastive Language-Image Pre-training with Word Frequency Masking*, a frequency-based text masking strategy for efficient VLM pre-training.
 
