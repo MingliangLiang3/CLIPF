@@ -41,12 +41,14 @@ Below reports **top-1 zero-shot accuracy** on ImageNet-1K before/after unmasking
 | CLIPA  | syntax     | 49           | 4           | 14.2            | 24.6            |
 | CLIPF  | frequency  | 49           | 4           | 17.0            | **30.9**        |
 
-### Scaling to LAION400M
-Pre-train **6 epochs** on LAION400M (112×112, 50% image masking), then fine-tune **0.4 epoch** at 224×224 without masking. Trained on **4×H100** with `amp_bf16`.
+### Scaling to LAION-400M
+Pre-train **6 epochs** on LAION-400M (112×112, 50% image masking and without masking), then fine-tune **128M** at 224×224 without masking. Trained on **4×H100** with `amp_bf16`.
 
 | Method | GPU Hours | Sample Seen | Image Size | Masking Ratio | Image Token | Text Token | Before Tuning | After Tuning |
 |--------|-----------|-------------|------------|---------------|-------------|-----------|---------------|--------------|
 | CLIPF  | 270       | 2.56B + 128M| 112 × 112  | 50%           | 25          | 16        | 57.5          | 61.6         |
+| CLIPF  | 300       | 2.56B + 128M| 112 × 112  | 00%           | 49          | 16        | 59.8          | 63.0         |
+
 
 ---
 
