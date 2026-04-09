@@ -1,38 +1,59 @@
-import pandas as pd
-from open_clip.tokenizer import SimpleTokenizer
-import collections
-import numpy as np
+"""
+Step 2 of the DataComp word-frequency pipeline.
+
+Reads the token counter JSON produced by read_parquet.py, computes a
+subsampling discard probability for each token using the formula:
+
+    discard_prob = max(0, 1 - sqrt(threshold / freq))
+
+and writes one output JSON per threshold value.
+
+Usage:
+    python data_counter.py --input  /path/to/DataComp_word_counter.json \
+                           --output_dir /path/to/DataComp/
+"""
+
+import argparse
 import json
-from tqdm import tqdm
-from multiprocessing import Pool
+from pathlib import Path
 
-reader = pd.read_csv('../data/cc12m/cc12m_train.csv', sep='\t', chunksize=10000)
-tokenizer = SimpleTokenizer()
+import numpy as np
 
-def process_by_chunk(row):
-    text = row[1]['caption']
-    text = tokenizer.encode_text(text)
-    return text
 
-words = []
-with Pool(processes=16) as pool:
-    for chunk in tqdm(reader):
-        df_list = pool.map(process_by_chunk, chunk.iterrows())
-        words.extend(df_list)
+def compute_word_frequency(counter: dict, threshold: float) -> dict:
+    total_count = sum(counter.values())
+    freqs = {word: count / total_count for word, count in counter.items()}
+    return {
+        word: max(0.0, 1 - round(np.sqrt(threshold / freqs[word]), 6))
+        for word in counter
+    }
 
-counter = collections.Counter([tk for st in words for tk in st])
-counter = dict(filter(lambda x: x[1] >= 5, counter.items()))
-counter = dict(counter.items())
-total_count = sum(counter.values())
-counter = dict(sorted(counter.items(), key=lambda x: x[1], reverse=True))
-print("Total words:", total_count) 
-# save the counter to a json file
-with open('../data/cc12m/cc12m_train_counter.json', 'w', encoding='utf-8') as f:
-    json.dump(counter, f)
 
-threshold = 1e-6
-freqs = {word: count / total_count for word, count in counter.items()} 
-word_frequency = {word: 1 - round(np.sqrt(threshold / freqs[word]), 6) for word in counter}
-# Save the word_frequency to a json file
-with open('../data/cc12m/cc12m_fq_1e6_words.json', 'w', encoding='utf-8') as f:
-    json.dump(word_frequency, f)
+def main():
+    parser = argparse.ArgumentParser(description="Compute subsampling discard probabilities from a token counter JSON.")
+    parser.add_argument("--input", required=True, help="Path to the token counter JSON (from read_parquet.py).")
+    parser.add_argument("--output_dir", required=True, help="Directory to write the word-frequency JSON files.")
+    parser.add_argument("--min_count", type=int, default=5, help="Discard tokens with fewer occurrences before computing frequencies (default: 5).")
+    args = parser.parse_args()
+
+    with open(args.input, "r", encoding="utf-8") as f:
+        counter = json.load(f)
+
+    counter = {k: v for k, v in sorted(counter.items(), key=lambda x: x[1], reverse=True) if v >= args.min_count}
+    total_count = sum(counter.values())
+    print(f"Total tokens: {total_count:,}  |  Unique: {len(counter):,}")
+
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for threshold in (1e-7):
+        word_frequency = compute_word_frequency(counter, threshold)
+        suffix = f"1e{int(round(np.log10(threshold)))}"
+        out_path = output_dir / f"DataComp_word_frequency_{suffix}.json"
+        with out_path.open("w", encoding="utf-8") as f:
+            json.dump(word_frequency, f, ensure_ascii=False, indent=4)
+        print(f"Saved threshold={threshold:.0e} → {out_path}")
+
+
+if __name__ == "__main__":
+    main()
