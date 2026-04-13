@@ -70,10 +70,9 @@ Top-1 zero-shot accuracy on ImageNet-1K, before and after unmasking fine-tuning.
 
 Pre-trained for 6 epochs on LAION-400M (112×112), then fine-tuned on 128M samples at 224×224 without masking. Trained on **4×H100** with `amp_bf16`.
 
-| Method | GPU Hours | Samples Seen    | Image Size | Masking | Image Tokens | Text Tokens | Pre-train | Fine-tune |
-|--------|:---------:|-----------------|:----------:|:-------:|:------------:|:-----------:|:---------:|:---------:|
-| CLIPF  | 270       | 2.56B + 128M    | 112×112    | 50%     | 25           | 16          | 57.5      | 61.6      |
-| CLIPF  | 300       | 2.56B + 128M    | 112×112    | 0%      | 49           | 16          | 59.8      | 63.0      |
+| Method | GPU Hours | Samples Seen    | Image Size | Image Tokens | Text Tokens | Pre-train | Fine-tune |
+|--------|:---------:|-----------------|:----------:|:------------:|:-----------:|:---------:|:---------:|
+| CLIPF  | 300       | 2.56B + 128M    | 112×112    | 49           | 16          | 59.8      | 63.0      |
 
 ---
 
