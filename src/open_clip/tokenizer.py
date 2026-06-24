@@ -4,6 +4,7 @@ Copied from https://github.com/openai/CLIP. Originally MIT License, Copyright (c
 """
 import gzip
 import html
+import json
 import os
 import random
 import string
@@ -170,7 +171,7 @@ class SimpleTokenizer(object):
         self.clean_fn = get_clean_fn(clean)
         if mask_probability_file is not None:
             with open(mask_probability_file, 'r') as f:
-                self.mask_probability = eval(f.read())
+                self.mask_probability = json.load(f)
         self.reduction_fn = get_reduction_mask_fn(reduction_mask) if reduction_mask else None
 
     def bpe(self, token):
@@ -407,8 +408,6 @@ def syntax_mask_tokenize(
 
     return result
 
-
-
 def frequency_mask_tokenize(        
     texts: Union[str, List[str]],
     context_length: int,
@@ -420,41 +419,30 @@ def frequency_mask_tokenize(
     """ Returns the tokenized representation of given input string(s).
     Apply frequency masking before tokenize.
     """
-    words_list, words_freq_list = [], []
+    words_list, words_freq_tensors = [], []
     for text in texts:
         words = _tokenizer.encode_text(text)
-        words_freq_list.append([mask_probability.get(str(word), 1.0) for word in words]) # drop the word frequency lower than 5
+        words_freq_tensors.append(torch.tensor([mask_probability.get(str(word), 1.0) for word in words]))
         words_list.append(words)
     result = torch.zeros(len(words_list), context_length, dtype=torch.long)
 
     for i, words in enumerate(words_list):
-        tokens = encode_fn(' '.join(words))
-        tokens = torch.tensor(tokens)
-        num_tokens = len(tokens)
-        if num_tokens > context_length - 2:  # 2 for sot and eot token
-            num_keep = context_length - 2
+        # if word count already fits, skip sampling (each word produces >= 1 token)
+        if len(words) > context_length - 2:
+            num_keep = min(context_length - 2, len(words))
+            rand = torch.rand(len(words)) - words_freq_tensors[i]
+            indices = rand.topk(num_keep).indices.sort().values
+            words = [words[j] for j in indices]
 
-            num_keep = min(num_keep, len(words))
-            
-            rand = torch.rand(len(words))
-            rand = rand - torch.tensor(words_freq_list[i])
-            indices = rand.topk(num_keep).indices
-
-            # sorted indices
-            indices = indices.sort().values
-            words = [words[i] for i in indices]
-
-            num_tokens = num_keep
-            tokens = encode_fn(' '.join(words))
-            tokens = torch.tensor(tokens)
-            tokens = tokens[:num_tokens]
+        tokens = torch.tensor(encode_fn(' '.join(words)))
+        num_tokens = min(len(tokens), context_length - 2)
+        tokens = tokens[:num_tokens]
 
         result[i, 0] = sot_token_id
         result[i, 1:num_tokens + 1] = tokens
         result[i, num_tokens + 1] = eot_token_id
 
     return result
-
 
 def get_reduction_mask_fn(type: str):
     """ Choose strategy for dropping (masking) tokens to achieve target context length"""
